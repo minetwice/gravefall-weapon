@@ -1,0 +1,17 @@
+name: Gravefall
+version: 1.1.0
+main: com.gravefall.GravefallPlugin
+api-version: '1.21'
+author: SD MINE
+description: Gravefall - the corrupted hammer of the Fallen Kingdom.
+
+commands:
+  gravefall:
+    description: Gravefall main command
+    aliases: [gf, grave]
+    usage: /gravefall <give|fragment|structure|revive|deaths|help>
+
+permissions:
+  gravefall.admin:
+    description: Access to all Gravefall admin commands
+    default: op

@@ -1,0 +1,45 @@
+# ============================================================
+#  GRAVEFALL - The Corrupted Hammer of the Fallen Kingdom
+# ============================================================
+
+# CustomModelData used on the NETHERITE_AXE item so resource packs
+# can safely override the model without touching vanilla items.
+custom-model-data: 7401
+
+weapon:
+  # Keep the GRAVEFALL hammer in your inventory when you die.
+  keep-on-death: true
+
+abilities:
+  soul-spiral:
+    enabled: true
+    cooldown: 8        # seconds
+    damage: 5.0
+    knockback: 1.5
+  ground-slam:
+    enabled: true
+    cooldown: 22       # seconds
+    damage: 4.0
+    launch-power: 1.15
+  meteor:
+    enabled: true
+    cooldown: 25       # seconds
+    damage: 10.0
+    lifetime-seconds: 10
+  combo-hits: 3        # melee hits needed to trigger the meteor
+  soul-harvest:
+    # Killing a player WITH the hammer heals the wielder.
+    heal: 4.0
+
+deaths:
+  # A player is banned after dying more than this many times.
+  max-deaths: 3
+  ban-reason: "The corruption has claimed your soul... you have fallen too many times."
+
+structure:
+  radius: 250            # 500x500 total area
+  blocks-per-tick: 1200  # generation speed (higher = faster but laggier)
+
+ritual:
+  required-fragments: 5
+  charge-seconds: 600    # 10 minutes altar awakening time
