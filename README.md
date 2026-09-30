@@ -35,9 +35,10 @@ Cooldowns are separate per ability and shown live on the action bar.
 - Only a player carrying **5 Death Fragments** can right-click to awaken it
   (or `/gravefall portal open` for admins). Once open it **stays open forever**
   and **everyone** can walk through.
-- Inside: a floating blue island in a starry void — warped nylium, sculk,
-  sea lanterns, soul fire. **One kingdom** for the whole server; every
-  portal leads to the same place.
+- Inside: a floating cyan island in a starry void — warped nylium, sculk,
+  sea lanterns, soul fire. The CYAN kingdom: prismarine + diamond + sea lantern
+  builds, grand lantern-lit path, castle keep. **One kingdom** for the whole
+server; every portal leads to the same place.
 - After the hammer is claimed, **6 rift portals** tear open in the kingdom
   that send players back to the overworld.
 - `/gravefall removeportal` removes the portal in front of you.

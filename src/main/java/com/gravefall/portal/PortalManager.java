@@ -114,39 +114,40 @@ public class PortalManager implements Listener {
             }
             Block b = at(w, base, side, fwd, i, 1, 0); // ground row
             remember(p, b);
-            b.setType(i <= -2 || i >= 0 ? Material.CRYING_OBSIDIAN : Material.AIR, false);
+            b.setType(i <= -2 || i >= 0 ? Material.PRISMARINE_BRICKS : Material.AIR, false);
         }
-        // side pillars
+        // side pillars (cyan)
         for (int h = 1; h <= 4; h++) {
             for (int i : new int[]{-2, 1}) {
                 Block b = at(w, base, side, fwd, i, 0, h);
                 remember(p, b);
-                b.setType(h == 4 ? Material.SEA_LANTERN : Material.CRYING_OBSIDIAN, false);
+                b.setType(h == 4 ? Material.SEA_LANTERN
+                        : (h == 2 ? Material.DIAMOND_BLOCK : Material.PRISMARINE_BRICKS), false);
             }
         }
-        // top row
+        // top row (cyan)
         for (int i = -2; i <= 1; i++) {
             Block b = at(w, base, side, fwd, i, 0, 4);
             remember(p, b);
-            b.setType(Material.CRYING_OBSIDIAN, false);
+            b.setType(Material.DIAMOND_BLOCK, false);
         }
-        // platform
+        // platform (cyan)
         for (int i = -3; i <= 2; i++) {
             for (int f = -1; f <= 1; f++) {
                 Block b = at(w, base, side, fwd, i, 1, f);
                 if (b.getY() > w.getMinHeight()) {
                     remember(p, b);
                     b.setType(ThreadLocalRandom.current().nextInt(10) < 3
-                            ? Material.SCULK : Material.POLISHED_DEEPSLATE, false);
+                            ? Material.PRISMARINE : Material.POLISHED_DEEPSLATE, false);
                 }
             }
         }
-        // obelisks flanking the gate
+        // obelisks flanking the gate (cyan)
         for (int i : new int[]{-4, 3}) {
             for (int h = 1; h <= 3; h++) {
                 Block b = at(w, base, side, fwd, i, 1, 0);
                 remember(p, b);
-                b.setType(h == 3 ? Material.SOUL_LANTERN : Material.DEEPSLATE_BRICKS, false);
+                b.setType(h == 3 ? Material.SEA_LANTERN : Material.PRISMARINE_BRICKS, false);
             }
         }
 
@@ -202,8 +203,9 @@ public class PortalManager implements Listener {
     }
 
     private void spawnOpenVisuals(Portal p) {
-        // swirling portal planes (custom resource pack model)
-        double[] rotations = {-28, 0, 28};
+        NamespacedKey ringKey = new NamespacedKey(plugin, "grv_portal_ring");
+        // swirling cyan portal planes (custom resource pack model)
+        double[] rotations = {-25, 0, 25};
         for (double rot : rotations) {
             ItemDisplay display = p.world.spawn(p.center.clone().add(0, -1, 0), ItemDisplay.class, d -> {
                 d.setItemStack(Items.createPortalIcon(plugin));
@@ -215,6 +217,17 @@ public class PortalManager implements Listener {
             });
             p.entities.add(display);
         }
+        // spinning rune ring around the gate
+        ItemDisplay ring = p.world.spawn(p.center.clone().add(0, -1, 0), ItemDisplay.class, d -> {
+            d.setItemStack(Items.createPortalRingIcon(plugin));
+            d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.FIXED);
+            d.setBillboard(Display.Billboard.FIXED);
+            d.setPersistent(true);
+            d.setRotation(p.yaw, 0f);
+            d.setInterpolationDelay(-1);
+            d.getPersistentDataContainer().set(ringKey, PersistentDataType.BYTE, (byte) 1);
+        });
+        p.entities.add(ring);
         // crystal floating above the gate
         ItemDisplay crystal = p.world.spawn(p.center.clone().add(0, 2.6, 0), ItemDisplay.class, d -> {
             d.setItemStack(Items.createCrystalIcon(plugin));
@@ -239,8 +252,8 @@ public class PortalManager implements Listener {
             }
             Location c = p.center;
             World w = p.world;
-            // soul vortex inside the gate
             long t = System.currentTimeMillis() / 50;
+            // soul vortex inside the gate (cyan)
             for (int h = 0; h <= 6; h++) {
                 double ang = t * 0.25 + h * 0.9;
                 double r = 0.35 + 0.65 * (h / 6.0);
@@ -252,23 +265,45 @@ public class PortalManager implements Listener {
                 }
             }
             w.spawnParticle(Particle.DUST, c, 4, 0.4, 1.0, 0.4, 0,
-                    new Particle.DustOptions(org.bukkit.Color.fromRGB(60, 140, 255), 1.4f));
+                    new Particle.DustOptions(org.bukkit.Color.fromRGB(40, 255, 255), 1.6f));
+            if (Math.random() < 0.05) {
+                w.spawnParticle(Particle.END_ROD, c, 1, 0.35, 1.0, 0.35, 0.01);
+            }
+            // spin the rune ring + bob the crystal
+            for (Entity e : p.entities) {
+                if (e instanceof ItemDisplay dd
+                        && dd.getPersistentDataContainer().has(ringKey(), PersistentDataType.BYTE)) {
+                    dd.setRotation((t * 1.8f) % 360f, 0f);
+                }
+            }
             if (Math.random() < 0.08) {
                 w.playSound(c, Sound.BLOCK_PORTAL_AMBIENT, 0.7f, 0.7f + (float) Math.random() * 0.4f);
             }
         }, 10L, 3L);
     }
 
+    private NamespacedKey ringKey() {
+        return new NamespacedKey(plugin, "grv_portal_ring");
+    }
+
     // ------------------------------------------------------------------
     // opening
     // ------------------------------------------------------------------
 
-    /** Opens (awakens) the given portal for a player. */
+    /**
+     * Opens (awakens) the given portal for a player.
+     * Makes sure the Soul Dimension exists first - the portal only truly
+     * opens once the kingdom is ready.
+     */
     public void openPortal(Portal p, Player opener, boolean silentForce) {
         if (p.open) {
             return;
         }
         p.open = true;
+        plugin.getDimensionManager().ensureDimension(opener, () -> doOpenAnimation(p, opener));
+    }
+
+    private void doOpenAnimation(Portal p, Player opener) {
         World w = p.world;
 
         // awakening animation
@@ -389,17 +424,21 @@ public class PortalManager implements Listener {
 
     private void teleportThrough(Player pl, Portal p) {
         travelCooldown.put(pl.getUniqueId(), System.currentTimeMillis());
+        Location dest = resolveTarget(p);
+        if (dest == null) {
+            // dimension not ready yet: kick generation and let the player retry
+            pl.sendActionBar(MiniMessage.miniMessage().deserialize(
+                    "<color:#00e5ff>The Soul Dimension is still materializing... try again in a moment!</color>"));
+            if (!plugin.getDimensionManager().isBuilding()) {
+                plugin.getDimensionManager().ensureDimension(pl, null);
+            }
+            return;
+        }
         World w = pl.getWorld();
         w.playSound(pl.getLocation(), Sound.BLOCK_PORTAL_TRAVEL, 1.0f, 0.8f);
         w.spawnParticle(Particle.PORTAL, pl.getLocation().add(0, 1, 0), 60, 0.5, 1.0, 0.5, 0.5);
         w.spawnParticle(Particle.SOUL, pl.getLocation().add(0, 1, 0), 30, 0.5, 1.0, 0.5, 0.1);
 
-        Location dest = resolveTarget(p);
-        if (dest == null) {
-            pl.sendMessage(MiniMessage.miniMessage().deserialize(
-                    "<red>The portal fizzles... the dimension is not ready yet.</red>"));
-            return;
-        }
         Location safe = dest.clone();
         safe.setYaw(p.yaw);
         pl.teleport(safe);
@@ -491,7 +530,9 @@ public class PortalManager implements Listener {
                 if (frame) {
                     Block b = at(w, base, side, fwd, i, 0, h);
                     remember(p, b);
-                    b.setType(h == 4 ? Material.SEA_LANTERN : Material.CRYING_OBSIDIAN, false);
+                    b.setType(h == 4 ? Material.SEA_LANTERN
+                            : (h == 0 || (i == -2 || i == 1) && h == 2 ? Material.DIAMOND_BLOCK
+                            : Material.PRISMARINE_BRICKS), false);
                 }
             }
         }

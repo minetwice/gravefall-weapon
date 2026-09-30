@@ -124,4 +124,14 @@ public final class Items {
         paper.setItemMeta(meta);
         return paper;
     }
+
+    /** Icon item for the spinning portal rune ring (RP model). */
+    public static ItemStack createPortalRingIcon(GravefallPlugin plugin) {
+        ItemStack paper = new ItemStack(Material.PAPER);
+        ItemMeta meta = paper.getItemMeta();
+        meta.displayName(MiniMessage.miniMessage().deserialize("<color:#00e5ff>Portal Rune Ring</color>"));
+        meta.setCustomModelData(plugin.getConfig().getInt("custom-model-data-portal-ring", 7404));
+        paper.setItemMeta(meta);
+        return paper;
+    }
 }

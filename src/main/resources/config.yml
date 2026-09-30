@@ -6,6 +6,7 @@
 custom-model-data: 7401          # hammer (netherite axe)
 custom-model-data-portal: 7402   # portal plane (paper icon -> RP model)
 custom-model-data-crystal: 7403  # floating soul crystals (paper icon -> RP model)
+custom-model-data-portal-ring: 7404  # spinning portal rune ring
 
 weapon:
   # Keep the GRAVEFALL hammer in your inventory when you die.

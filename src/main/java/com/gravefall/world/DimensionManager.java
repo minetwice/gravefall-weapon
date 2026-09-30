@@ -20,6 +20,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,6 +37,7 @@ public class DimensionManager {
     private Location altarTop;
     private Location volcanoTop;
     private boolean building = false;
+    private final List<Runnable> pendingCallbacks = new ArrayList<>();
 
     public DimensionManager(GravefallPlugin plugin) {
         this.plugin = plugin;
@@ -81,8 +83,9 @@ public class DimensionManager {
 
     /**
      * Makes sure the dimension + kingdom exist, then runs the callback.
-     * Creates the world and generates the Corrupted Kingdom (soul theme)
-     * on first use. Feedback messages are sent to the given player.
+     * Creates the world and generates the Corrupted Kingdom (cyan soul theme)
+     * on first use. Callbacks requested while building are queued and run
+     * when the kingdom is ready. Feedback messages go to the given player.
      */
     public void ensureDimension(Player feedbackTo, Runnable onComplete) {
         World w = ensureWorld();
@@ -93,17 +96,23 @@ public class DimensionManager {
             }
             return;
         }
-        if (kingdomSpawn != null || building) {
+        if (kingdomSpawn != null) {
             if (onComplete != null) {
                 onComplete.run();
             }
             return;
         }
+        if (onComplete != null) {
+            pendingCallbacks.add(onComplete);
+        }
+        if (building) {
+            return; // already generating; queued callback will run when done
+        }
         building = true;
         if (feedbackTo != null) {
             feedbackTo.sendMessage(MiniMessage.miniMessage().deserialize(
                     "<dark_purple><bold>☠ The Soul Dimension is being torn open...</bold></dark_purple> "
-                            + "<gray>generating the Corrupted Kingdom.</gray>"));
+                            + "<gray>generating the Cyan Kingdom (this can take a minute).</gray>"));
         }
         Location center = new Location(w, 0.5, 0, 0.5);
         int radius = plugin.getConfig().getInt("dimension.kingdom-radius", 200);
@@ -116,12 +125,21 @@ public class DimensionManager {
             saveMarker();
             if (feedbackTo != null) {
                 feedbackTo.sendMessage(MiniMessage.miniMessage().deserialize(
-                        "<light_purple><bold>The Corrupted Kingdom has risen in the Soul Dimension!</bold></light_purple>"));
+                        "<light_purple><bold>The Cyan Kingdom has risen in the Soul Dimension!</bold></light_purple>"));
             }
-            if (onComplete != null) {
-                onComplete.run();
+            for (Runnable r : new ArrayList<>(pendingCallbacks)) {
+                try {
+                    r.run();
+                } catch (Throwable ignored) {
+                }
             }
+            pendingCallbacks.clear();
         });
+    }
+
+    /** True while the kingdom is generating. */
+    public boolean isBuilding() {
+        return building;
     }
 
     private void saveMarker() {
