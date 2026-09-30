@@ -23,6 +23,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -114,7 +115,7 @@ public class PortalManager implements Listener {
             }
             Block b = at(w, base, side, fwd, i, 1, 0); // ground row
             remember(p, b);
-            b.setType(i <= -2 || i >= 0 ? Material.PRISMARINE_BRICKS : Material.AIR, false);
+            b.setType(i <= -2 || i >= 0 ? Material.END_STONE_BRICKS : Material.AIR, false);
         }
         // side pillars (cyan)
         for (int h = 1; h <= 4; h++) {
@@ -122,14 +123,14 @@ public class PortalManager implements Listener {
                 Block b = at(w, base, side, fwd, i, 0, h);
                 remember(p, b);
                 b.setType(h == 4 ? Material.SEA_LANTERN
-                        : (h == 2 ? Material.DIAMOND_BLOCK : Material.PRISMARINE_BRICKS), false);
+                        : (h == 2 ? Material.PURPUR_BLOCK : Material.END_STONE_BRICKS), false);
             }
         }
         // top row (cyan)
         for (int i = -2; i <= 1; i++) {
             Block b = at(w, base, side, fwd, i, 0, 4);
             remember(p, b);
-            b.setType(Material.DIAMOND_BLOCK, false);
+            b.setType(Material.PURPUR_BLOCK, false);
         }
         // platform (cyan)
         for (int i = -3; i <= 2; i++) {
@@ -138,7 +139,7 @@ public class PortalManager implements Listener {
                 if (b.getY() > w.getMinHeight()) {
                     remember(p, b);
                     b.setType(ThreadLocalRandom.current().nextInt(10) < 3
-                            ? Material.PRISMARINE : Material.POLISHED_DEEPSLATE, false);
+                            ? Material.PURPUR_PILLAR : Material.POLISHED_DEEPSLATE, false);
                 }
             }
         }
@@ -147,7 +148,7 @@ public class PortalManager implements Listener {
             for (int h = 1; h <= 3; h++) {
                 Block b = at(w, base, side, fwd, i, 1, 0);
                 remember(p, b);
-                b.setType(h == 3 ? Material.SEA_LANTERN : Material.PRISMARINE_BRICKS, false);
+                b.setType(h == 3 ? Material.SEA_LANTERN : Material.END_STONE_BRICKS, false);
             }
         }
 
@@ -199,7 +200,35 @@ public class PortalManager implements Listener {
         p.entities.add(interaction);
         if (p.open) {
             spawnOpenVisuals(p);
+        } else {
+            spawnSealedVisuals(p);
         }
+    }
+
+    /** A dim sealed pane so a dormant portal clearly looks "closed". */
+    private void spawnSealedVisuals(Portal p) {
+        ItemDisplay sealed = p.world.spawn(p.center.clone().add(0, -1, 0), ItemDisplay.class, d -> {
+            d.setItemStack(Items.createSealedPortalIcon(plugin));
+            d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.FIXED);
+            d.setBillboard(Display.Billboard.FIXED);
+            d.setPersistent(true);
+            d.setRotation(p.yaw, 0f);
+            d.setInterpolationDelay(-1);
+            d.getPersistentDataContainer().set(sealedKey(), PersistentDataType.BYTE, (byte) 1);
+        });
+        p.entities.add(sealed);
+        if (p.ambientTask != null) {
+            p.ambientTask.cancel();
+        }
+        p.ambientTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            if (p.open) {
+                return;
+            }
+            // faint cold shimmer over the sealed pane
+            p.world.spawnParticle(Particle.SOUL, p.center, 2, 0.7, 1.2, 0.3, 0.01);
+            p.world.spawnParticle(Particle.DUST, p.center, 2, 0.6, 1.1, 0.3, 0,
+                    new Particle.DustOptions(org.bukkit.Color.fromRGB(30, 60, 90), 1.2f));
+        }, 10L, 8L);
     }
 
     private void spawnOpenVisuals(Portal p) {
@@ -286,6 +315,10 @@ public class PortalManager implements Listener {
         return new NamespacedKey(plugin, "grv_portal_ring");
     }
 
+    private NamespacedKey sealedKey() {
+        return new NamespacedKey(plugin, "grv_portal_sealed");
+    }
+
     // ------------------------------------------------------------------
     // opening
     // ------------------------------------------------------------------
@@ -305,6 +338,17 @@ public class PortalManager implements Listener {
 
     private void doOpenAnimation(Portal p, Player opener) {
         World w = p.world;
+        // strip the sealed pane (keep frame + interaction)
+        for (Entity e : new ArrayList<>(p.entities)) {
+            if (e instanceof ItemDisplay dd
+                    && dd.getPersistentDataContainer().has(sealedKey(), PersistentDataType.BYTE)) {
+                dd.remove();
+                p.entities.remove(dd);
+            }
+        }
+        if (p.ambientTask != null) {
+            p.ambientTask.cancel();
+        }
 
         // awakening animation
         w.strikeLightningEffect(p.center);
@@ -351,27 +395,86 @@ public class PortalManager implements Listener {
         if (e.getHand() != EquipmentSlot.HAND) {
             return;
         }
-        Portal p = portalByInteraction(e.getRightClicked());
+        tryOpenAt(e.getPlayer(), e.getRightClicked());
+        if (portalByInteraction(e.getRightClicked()) != null) {
+            e.setCancelled(true);
+        }
+    }
+
+    /** Interaction entities can fire this variant instead - handle both. */
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onInteractAt(PlayerInteractAtEntityEvent e) {
+        if (e.getHand() != EquipmentSlot.HAND) {
+            return;
+        }
+        tryOpenAt(e.getPlayer(), e.getRightClicked());
+        if (portalByInteraction(e.getRightClicked()) != null) {
+            e.setCancelled(true);
+        }
+    }
+
+    /** Fallback: right-clicking the frame blocks of a dormant portal. */
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onBlockClick(org.bukkit.event.player.PlayerInteractEvent e) {
+        if (e.getHand() != EquipmentSlot.HAND || e.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+        if (e.getClickedBlock() == null) {
+            return;
+        }
+        Location cl = e.getClickedBlock().getLocation().add(0.5, 0.5, 0.5);
+        for (Portal p : portals) {
+            if (!p.open && p.world.equals(e.getPlayer().getWorld())
+                    && p.center.distanceSquared(cl) < 16) {
+                tryOpenFor(e.getPlayer());
+                e.setCancelled(true);
+                return;
+            }
+        }
+    }
+
+    private void tryOpenAt(Player pl, Entity clicked) {
+        Portal p = portalByInteraction(clicked);
         if (p == null) {
             return;
         }
-        e.setCancelled(true);
         if (p.open) {
-            e.getPlayer().sendActionBar(MiniMessage.miniMessage().deserialize(
+            pl.sendActionBar(MiniMessage.miniMessage().deserialize(
                     "<gray>Step into the portal...</gray>"));
             return;
         }
-        Player pl = e.getPlayer();
+        tryOpenFor(pl);
+    }
+
+    private void tryOpenFor(Player pl) {
         int needed = plugin.getConfig().getInt("ritual.required-fragments", 5);
-        if (countFragments(pl) >= needed) {
-            openPortal(p, pl, false);
+        int have = countFragments(pl);
+        if (have >= needed) {
+            pl.sendActionBar(MiniMessage.miniMessage().deserialize(
+                    "<color:#00e5ff><bold>The portal answers your fragments...</bold></color>"));
+            openPortal(portalNear(pl), pl, false);
             pl.playSound(pl.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.2f);
         } else {
             pl.playSound(pl.getLocation(), Sound.BLOCK_FIRE_EXTINGUISH, 0.8f, 0.6f);
             pl.sendActionBar(MiniMessage.miniMessage().deserialize(
-                    "<red>The portal rejects you — you carry " + countFragments(pl) + "/" + needed
+                    "<red>The portal rejects you — you carry " + have + "/" + needed
                             + " Death Fragments.</red>"));
         }
+    }
+
+    private Portal portalNear(Player pl) {
+        Portal best = null;
+        double bd = 9;
+        for (Portal p : portals) {
+            if (p.world.equals(pl.getWorld())) {
+                double d = p.center.distanceSquared(pl.getLocation());
+                if (d < bd) {
+                    bd = d;
+                    best = p;
+                }
+            }
+        }
+        return best;
     }
 
     @EventHandler
@@ -531,8 +634,8 @@ public class PortalManager implements Listener {
                     Block b = at(w, base, side, fwd, i, 0, h);
                     remember(p, b);
                     b.setType(h == 4 ? Material.SEA_LANTERN
-                            : (h == 0 || (i == -2 || i == 1) && h == 2 ? Material.DIAMOND_BLOCK
-                            : Material.PRISMARINE_BRICKS), false);
+                            : (h == 0 || (i == -2 || i == 1) && h == 2 ? Material.PURPUR_BLOCK
+                            : Material.END_STONE_BRICKS), false);
                 }
             }
         }

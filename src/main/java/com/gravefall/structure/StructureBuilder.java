@@ -59,16 +59,16 @@ public final class StructureBuilder {
             if (theme == Theme.SOUL) {
                 // CYAN kingdom: prismarine + diamond + sea lantern glow
                 platform = Material.POLISHED_DEEPSLATE.createBlockData();
-                platformAccent = Material.DIAMOND_BLOCK.createBlockData();
+                platformAccent = Material.PURPUR_BLOCK.createBlockData(); // Soul Stone (RP)
                 rareAccent = Material.SEA_LANTERN.createBlockData();
-                altarTier = Material.PRISMARINE_BRICKS.createBlockData();
-                altarBody = Material.DIAMOND_BLOCK.createBlockData();
-                altarPillar = Material.PRISMARINE.createBlockData();
+                altarTier = Material.END_STONE_BRICKS.createBlockData(); // Soul Bricks (RP)
+                altarBody = Material.PURPUR_BLOCK.createBlockData(); // Soul Stone (RP)
+                altarPillar = Material.PURPUR_PILLAR.createBlockData(); // Soul Pillar (RP)
                 altarTopBlock = Material.SEA_LANTERN.createBlockData();
-                frameBase = Material.PRISMARINE_BRICKS.createBlockData();
-                framePillar = Material.PRISMARINE.createBlockData();
+                frameBase = Material.END_STONE_BRICKS.createBlockData(); // Soul Bricks (RP)
+                framePillar = Material.PURPUR_PILLAR.createBlockData(); // Soul Pillar (RP)
                 frameTop = Material.SEA_LANTERN.createBlockData();
-                wall = Material.DEEPSLATE_BRICKS.createBlockData();
+                wall = Material.END_STONE_BRICKS.createBlockData(); // Soul Bricks (RP)
                 wallCracked = Material.CRACKED_DEEPSLATE_BRICKS.createBlockData();
                 wallBattlement = Material.DEEPSLATE_TILE_WALL.createBlockData();
                 towerLight = Material.SEA_LANTERN.createBlockData();
@@ -83,7 +83,7 @@ public final class StructureBuilder {
                 frameBase = Material.POLISHED_BLACKSTONE_BRICKS.createBlockData();
                 framePillar = Material.CRYING_OBSIDIAN.createBlockData();
                 frameTop = Material.CHISELED_POLISHED_BLACKSTONE.createBlockData();
-                wall = Material.DEEPSLATE_BRICKS.createBlockData();
+                wall = Material.END_STONE_BRICKS.createBlockData(); // Soul Bricks (RP)
                 wallCracked = Material.CRACKED_DEEPSLATE_BRICKS.createBlockData();
                 wallBattlement = Material.POLISHED_BLACKSTONE_BRICK_WALL.createBlockData();
                 towerLight = Material.SEA_LANTERN.createBlockData();
@@ -338,7 +338,7 @@ public final class StructureBuilder {
         // ------------------------------------------------------------------
         // 5b) Grand cyan path from the gate (south) to the altar + lampposts
         // ------------------------------------------------------------------
-        BlockData dPath = theme == Theme.SOUL ? Material.PRISMARINE_BRICKS.createBlockData() : pal.platform;
+        BlockData dPath = pal.altarTier;
         BlockData dPathEdge = Material.POLISHED_DEEPSLATE.createBlockData();
         for (int z = 8; z <= wallR - 6; z++) {
             int y = w.getHighestBlockYAt(cx, cz + z);
@@ -385,7 +385,7 @@ public final class StructureBuilder {
                     if (h == keepH) {
                         pick = pal.towerLight; // glowing cyan crown
                     } else if (h % 5 == 0) {
-                        pick = pal.platformAccent; // diamond bands
+                        pick = pal.platformAccent; // Soul Stone bands
                     } else {
                         pick = rnd.nextInt(100) < 80 ? pal.altarTier : pal.wall;
                     }
@@ -431,7 +431,7 @@ public final class StructureBuilder {
                         if (h == 0) {
                             jobs.add(new Job(pal.platform, hx + dx, hy, hz + dz));
                         } else if (roof) {
-                            jobs.add(new Job(theme == Theme.SOUL ? Material.LIGHT_BLUE_CONCRETE.createBlockData() : pal.platformAccent,
+                            jobs.add(new Job(theme == Theme.SOUL ? Material.PURPUR_BLOCK.createBlockData() : pal.platformAccent,
                                     hx + dx, hy + h, hz + dz));
                         } else if (wall && rnd.nextInt(6) > 0) {
                             jobs.add(new Job(rnd.nextInt(100) < 70 ? pal.wall : pal.wallCracked,

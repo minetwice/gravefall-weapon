@@ -48,6 +48,7 @@ public final class GravefallPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new DeathListener(this), this);
         getServer().getPluginManager().registerEvents(structureRitual, this);
         getServer().getPluginManager().registerEvents(portalManager, this);
+        getServer().getPluginManager().registerEvents(mobManager, this);
 
         PluginCommand cmd = Objects.requireNonNull(getCommand("gravefall"), "gravefall command missing from plugin.yml");
         GravefallCommand executor = new GravefallCommand(this);

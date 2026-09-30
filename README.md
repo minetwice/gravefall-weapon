@@ -43,11 +43,19 @@ server; every portal leads to the same place.
   that send players back to the overworld.
 - `/gravefall removeportal` removes the portal in front of you.
 
+### Custom blocks (resource pack)
+The dimension's **Soul blocks** are retextured in the same pack:
+**Soul Stone** (purpur block), **Soul Pillar** (purpur pillar) and
+**Soul Bricks** (end stone bricks) - glowing cyan, used across the kingdom,
+the portal frames and the island surface.
+
 ### Dimension mobs
-- **Frost Frog** — pale cold frog; its long spectral tongue lashes out,
-  damaging and freezing players for ~2 seconds.
-- **Soul Wisp** — harmless glowing wisps drifting around the kingdom.
-- **Grave Sentinel** — wither skeleton guardians of the walls.
+All five have custom 3D models + textures (paper icons on display riders):
+- **Frost Frog** — long spectral tongue; damages + freezes players ~2 seconds.
+- **Soul Wisp** — glowing orb with orbiting shards, drifts around the kingdom.
+- **Grave Sentinel** — armored knight with a glowing visor, guards the walls.
+- **Void Moth** — dark moth with glowing cyan wings.
+- **Cryo Spider** — icy eight-legged hunter.
 
 ### The ritual (inside the dimension's kingdom)
 Volcano with a live lava crater + lava channels, prismarine monument,

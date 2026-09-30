@@ -127,11 +127,29 @@ public final class Items {
 
     /** Icon item for the spinning portal rune ring (RP model). */
     public static ItemStack createPortalRingIcon(GravefallPlugin plugin) {
+        return createPaperIcon(plugin, plugin.getConfig().getInt("custom-model-data-portal-ring", 7404),
+                "<color:#00e5ff>Portal Rune Ring</color>");
+    }
+
+    /** Dim sealed pane shown in dormant portals. */
+    public static ItemStack createSealedPortalIcon(GravefallPlugin plugin) {
+        return createPaperIcon(plugin, plugin.getConfig().getInt("custom-model-data-portal-sealed", 7410),
+                "<color:#3a4d6b>Sealed Portal</color>");
+    }
+
+    /** Generic icon helper: custom-model-data on paper -> RP model. */
+    public static ItemStack createPaperIcon(GravefallPlugin plugin, int cmd, String miniName) {
         ItemStack paper = new ItemStack(Material.PAPER);
         ItemMeta meta = paper.getItemMeta();
-        meta.displayName(MiniMessage.miniMessage().deserialize("<color:#00e5ff>Portal Rune Ring</color>"));
-        meta.setCustomModelData(plugin.getConfig().getInt("custom-model-data-portal-ring", 7404));
+        meta.displayName(MiniMessage.miniMessage().deserialize(miniName));
+        meta.setCustomModelData(cmd);
         paper.setItemMeta(meta);
         return paper;
+    }
+
+    /** Custom dimension mob models (display-entity riders). */
+    public static ItemStack createMobIcon(GravefallPlugin plugin, String key) {
+        int cmd = plugin.getConfig().getInt("custom-model-data-" + key, 7405);
+        return createPaperIcon(plugin, cmd, "<color:#00e5ff>Soul Creature</color>");
     }
 }

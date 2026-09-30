@@ -265,12 +265,31 @@ public class StructureRitual implements Listener {
             bossBar.addPlayer(p);
         }
 
-        // soul "wires" from every filled frame to the altar
+        // soul "wires" from every filled frame converge into the floating
+        // hammer at mid-altar - the weapon is visible while it charges
+        spawnHammerDisplay();
         linesTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            Location mid = (hammer != null && hammer.isValid())
+                    ? hammer.getLocation().clone()
+                    : info.altarTop().clone();
             for (ItemFrame frame : frames) {
                 if (frame.isValid() && filled.contains(frame.getUniqueId())) {
-                    drawLine(frame.getLocation().add(0, 0.5, 0), info.altarTop(), 1.0);
+                    drawLine(frame.getLocation().add(0, 0.5, 0), mid, 1.0);
                 }
+            }
+            // charge pulses sucked into the weapon
+            long t = System.currentTimeMillis();
+            for (int i = 0; i < 3; i++) {
+                double a = t / 600.0 + i * Math.PI * 2.0 / 3.0;
+                double r = 1.6;
+                Location from = mid.clone().add(Math.cos(a) * r, 0.2, Math.sin(a) * r);
+                Vector inward = mid.toVector().subtract(from.toVector()).multiply(0.25);
+                Location pt = from.clone().add(inward);
+                w.spawnParticle(Particle.SOUL_FIRE_FLAME, pt, 2, 0.03, 0.03, 0.03, 0.01);
+                w.spawnParticle(Particle.WITCH, pt, 1, 0.02, 0.02, 0.02, 0);
+            }
+            if (Math.random() < 0.15) {
+                w.spawnParticle(Particle.END_ROD, mid, 2, 0.25, 0.35, 0.25, 0.02);
             }
         }, 0L, 3L);
 
@@ -348,7 +367,7 @@ public class StructureRitual implements Listener {
                 }
             }
             frames.clear();
-            spawnHammer();
+            spawnClaimHitbox();
         }, 45L);
 
         plugin.broadcast(MiniMessage.miniMessage().deserialize(
@@ -356,25 +375,20 @@ public class StructureRitual implements Listener {
                         + "<gray>The hammer waits upon the corrupted altar... claim it, if you dare.</gray>"));
     }
 
-    private void spawnHammer() {
+    private void spawnHammerDisplay() {
         World w = info.world();
         Location at = info.altarTop().clone().add(0, 1.0, 0);
 
-        hammer = w.spawn(at, ItemDisplay.class, d -> {
-            d.setItemStack(Items.createGravefall(plugin));
-            d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.FIXED);
-            d.setBillboard(Display.Billboard.CENTER);
-            d.setGlowing(true);
-            d.setPersistent(false);
-        });
-        hitbox = w.spawn(at, Interaction.class, i -> {
-            i.setInteractionWidth(1.6f);
-            i.setInteractionHeight(1.6f);
-            i.setPersistent(false);
-        });
-
-        w.playSound(at, Sound.BLOCK_BEACON_POWER_SELECT, 2.0f, 1.2f);
-        w.playSound(at, Sound.ITEM_TOTEM_USE, 1.5f, 1.6f);
+        if (hammer == null || !hammer.isValid()) {
+            hammer = w.spawn(at, ItemDisplay.class, d -> {
+                d.setItemStack(Items.createGravefall(plugin));
+                d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.FIXED);
+                d.setBillboard(Display.Billboard.CENTER);
+                d.setGlowing(true);
+                d.setPersistent(false);
+            });
+            w.playSound(at, Sound.BLOCK_BEACON_POWER_SELECT, 2.0f, 1.2f);
+        }
 
         hammerTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             if (hammer == null || !hammer.isValid()) {
@@ -389,6 +403,19 @@ public class StructureRitual implements Listener {
                 w.spawnParticle(Particle.SOUL, hl.clone().add(Math.cos(a) * 0.9, 0, Math.sin(a) * 0.9), 1, 0, 0, 0, 0);
             }
         }, 2L, 2L);
+    }
+
+    /** Only after the charge timer does the weapon become claimable. */
+    private void spawnClaimHitbox() {
+        World w = info.world();
+        Location at = info.altarTop().clone().add(0, 1.0, 0);
+        hitbox = w.spawn(at, Interaction.class, i -> {
+            i.setInteractionWidth(1.6f);
+            i.setInteractionHeight(1.6f);
+            i.setPersistent(false);
+        });
+
+        w.playSound(at, Sound.ITEM_TOTEM_USE, 1.5f, 1.6f);
 
         ambientTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             for (Player p : w.getPlayers()) {

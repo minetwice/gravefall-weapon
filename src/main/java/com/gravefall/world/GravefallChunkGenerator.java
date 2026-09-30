@@ -74,6 +74,9 @@ public class GravefallChunkGenerator extends ChunkGenerator {
         if (n > 0.55) {
             return Material.SCULK;
         }
+        if (n < -0.85) {
+            return Material.PURPUR_BLOCK; // Soul Stone veins (RP)
+        }
         if (n < -0.65) {
             return Material.SOUL_SOIL;
         }

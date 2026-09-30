@@ -7,6 +7,12 @@ custom-model-data: 7401          # hammer (netherite axe)
 custom-model-data-portal: 7402   # portal plane (paper icon -> RP model)
 custom-model-data-crystal: 7403  # floating soul crystals (paper icon -> RP model)
 custom-model-data-portal-ring: 7404  # spinning portal rune ring
+custom-model-data-frost-frog: 7405  # mob model (frog)
+custom-model-data-soul-wisp: 7406   # mob model (wisp)
+custom-model-data-grave-sentinel: 7407 # mob model (sentinel)
+custom-model-data-void-moth: 7408    # mob model (moth)
+custom-model-data-cryo-spider: 7409 # mob model (spider)
+custom-model-data-portal-sealed: 7410 # dormant portal pane
 
 weapon:
   # Keep the GRAVEFALL hammer in your inventory when you die.
@@ -52,9 +58,11 @@ portal:
   return-portals: 6
 
 mobs:
-  frost-frogs: 10        # freezing frogs in the dimension
-  soul-wisps: 8          # glowing wisps
-  grave-sentinels: 5     # wither skeleton guards
+  frost-frogs: 8         # freezing frogs (custom model + tongue freeze)
+  soul-wisps: 8          # glowing display wisps
+  grave-sentinels: 4     # armored knight guards
+  void-moths: 6          # drifting cyan moths
+  cryo-spiders: 4        # icy spiders
   frog-damage: 3.0
   frog-freeze-seconds: 2
 
