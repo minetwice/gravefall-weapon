@@ -80,6 +80,8 @@ ban, undone with `/gravefall revive`.
 | `/gravefall structure [radius]` | Raise the corrupted kingdom (overworld) |
 | `/gravefall portal [open]` | Summon the Soul Dimension portal |
 | `/gravefall removeportal` | Remove the portal in front of you |
+| `/gravefall back [player]` | Pull a player (or yourself) out of the Soul Dimension |
+| `/gravefall skip` | Shorten the running awakening timer to 1 minute (`ritual.skip-seconds`) |
 | `/gravefall revive <player>` | Unban a corruption-banned player |
 | `/gravefall deaths [player]` | Show death count |
 | `/gravefall reload` | Reload config |

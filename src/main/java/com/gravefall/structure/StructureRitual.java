@@ -214,6 +214,24 @@ public class StructureRitual implements Listener {
         return false;
     }
 
+    /** Admin shortcut: shorten the remaining awakening time (seconds). */
+    public boolean skipCharge(long seconds) {
+        if (phase != Phase.CHARGING) {
+            return false;
+        }
+        long targetMillis = Math.max(0L, seconds * 1000L);
+        if (System.currentTimeMillis() - chargeStart > chargeTotal - targetMillis) {
+            return true; // already shorter than requested
+        }
+        chargeStart = System.currentTimeMillis() - (chargeTotal - targetMillis);
+        World w = info == null ? null : info.world();
+        if (w != null) {
+            w.playSound(info.center(), Sound.BLOCK_BEACON_POWER_SELECT, 1.5f, 1.8f);
+            w.spawnParticle(Particle.END_ROD, info.altarTop(), 60, 1.0, 1.0, 1.0, 0.1);
+        }
+        return true;
+    }
+
     private void onFragmentBound(ItemFrame frame, Player who) {
         filled.add(frame.getUniqueId());
         World w = info.world();

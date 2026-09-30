@@ -8,6 +8,8 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.BanList;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -32,7 +34,7 @@ import java.util.List;
 public class GravefallCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBS = Arrays.asList(
-            "give", "fragment", "structure", "portal", "removeportal", "revive", "deaths", "reload", "help");
+            "give", "fragment", "structure", "portal", "removeportal", "back", "skip", "revive", "deaths", "reload", "help");
 
     private final GravefallPlugin plugin;
 
@@ -175,6 +177,58 @@ public class GravefallCommand implements CommandExecutor, TabCompleter {
                 }
                 plugin.getPortalManager().removeNear(p);
             }
+            case "back" -> {
+                Player target;
+                if (args.length >= 2) {
+                    target = Bukkit.getPlayerExact(args[1]);
+                    if (target == null) {
+                        sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                                "<red>Player not found: " + args[1] + "</red>"));
+                        return true;
+                    }
+                } else if (sender instanceof Player p) {
+                    target = p;
+                } else {
+                    sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                            "<red>Usage: /gravefall back <player></red>"));
+                    return true;
+                }
+                World dim = plugin.getDimensionManager().getWorld();
+                if (dim == null || !target.getWorld().equals(dim)) {
+                    sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                            "<red>" + target.getName() + " is not inside the Soul Dimension.</red>"));
+                    return true;
+                }
+                for (World w : Bukkit.getWorlds()) {
+                    if (w.getEnvironment() == World.Environment.NORMAL
+                            && !plugin.getDimensionManager().isDimensionWorld(w)) {
+                        Location dest = w.getSpawnLocation().add(0.5, 1, 0.5);
+                        target.getWorld().playSound(target.getLocation(), Sound.BLOCK_PORTAL_TRAVEL, 1.0f, 0.8f);
+                        target.getWorld().spawnParticle(Particle.PORTAL, target.getLocation().add(0, 1, 0), 60, 0.5, 1.0, 0.5, 0.5);
+                        target.teleport(dest);
+                        w.playSound(dest, Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, 1.0f, 1.4f);
+                        w.spawnParticle(Particle.PORTAL, dest.clone().add(0, 1, 0), 60, 0.5, 1.0, 0.5, 0.5);
+                        target.sendMessage(MiniMessage.miniMessage().deserialize(
+                                "<color:#00e5ff>You were pulled back into the living world.</color>"));
+                        sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                                "<light_purple>☠ " + target.getName() + " returned to " + w.getName() + ".</light_purple>"));
+                        return true;
+                    }
+                }
+                sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                        "<red>No overworld found to return to.</red>"));
+            }
+            case "skip" -> {
+                int secs = plugin.getConfig().getInt("ritual.skip-seconds", 60);
+                if (plugin.getStructureRitual().skipCharge(secs)) {
+                    plugin.broadcast(MiniMessage.miniMessage().deserialize(
+                            "<color:#00e5ff><bold>☠ The gods grow impatient!</bold></color> <gray>The awakening "
+                                    + "has been accelerated — " + formatSecs(secs) + " remaining.</gray>"));
+                } else {
+                    sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                            "<red>No ritual is currently charging. Fragments must be bound to the frames first.</red>"));
+                }
+            }
             case "reload" -> {
                 plugin.reloadConfig();
                 sender.sendMessage(MiniMessage.miniMessage().deserialize(
@@ -183,6 +237,16 @@ public class GravefallCommand implements CommandExecutor, TabCompleter {
             default -> help(sender);
         }
         return true;
+    }
+
+    /** 90 -> "1m 30s" for command feedback. */
+    private static String formatSecs(int total) {
+        if (total >= 60) {
+            int m = total / 60;
+            int s = total % 60;
+            return s == 0 ? m + "m" : m + "m " + s + "s";
+        }
+        return total + "s";
     }
 
     private void help(CommandSender sender) {
@@ -198,6 +262,10 @@ public class GravefallCommand implements CommandExecutor, TabCompleter {
                 "<dark_purple>»</dark_purple> <gray>/gravefall portal [open] <dark_gray>- summon the Soul Dimension portal</dark_gray>"));
         sender.sendMessage(MiniMessage.miniMessage().deserialize(
                 "<dark_purple>»</dark_purple> <gray>/gravefall removeportal <dark_gray>- remove the portal in front of you</dark_gray>"));
+        sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                "<dark_purple>»</dark_purple> <gray>/gravefall back [player] <dark_gray>- pull someone out of the dimension</dark_gray>"));
+        sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                "<dark_purple>»</dark_purple> <gray>/gravefall skip <dark_gray>- shorten the awakening timer</dark_gray>"));
         sender.sendMessage(MiniMessage.miniMessage().deserialize(
                 "<dark_purple>»</dark_purple> <gray>/gravefall revive <player> <dark_gray>- unban the fallen</dark_gray>"));
         sender.sendMessage(MiniMessage.miniMessage().deserialize(

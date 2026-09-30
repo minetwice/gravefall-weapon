@@ -69,3 +69,4 @@ mobs:
 ritual:
   required-fragments: 5
   charge-seconds: 600    # 10 minutes altar awakening time
+  skip-seconds: 60       # /gravefall skip shortens the timer to this
