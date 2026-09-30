@@ -3,7 +3,10 @@ package com.gravefall;
 import com.gravefall.command.GravefallCommand;
 import com.gravefall.listener.DeathListener;
 import com.gravefall.listener.WeaponListener;
+import com.gravefall.mobs.MobManager;
+import com.gravefall.portal.PortalManager;
 import com.gravefall.structure.StructureRitual;
+import com.gravefall.world.DimensionManager;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -15,6 +18,7 @@ import java.util.Objects;
 
 /**
  * GRAVEFALL - the corrupted hammer of the Fallen Kingdom.
+ * v1.2.0: Soul Dimension + portals + dimension mobs + epic ability/ritual FX.
  */
 public final class GravefallPlugin extends JavaPlugin {
 
@@ -23,6 +27,9 @@ public final class GravefallPlugin extends JavaPlugin {
     private CooldownManager cooldownManager;
     private DeathTracker deathTracker;
     private StructureRitual structureRitual;
+    private DimensionManager dimensionManager;
+    private PortalManager portalManager;
+    private MobManager mobManager;
 
     @Override
     public void onEnable() {
@@ -33,10 +40,14 @@ public final class GravefallPlugin extends JavaPlugin {
         cooldownManager = new CooldownManager(this);
         deathTracker = new DeathTracker();
         structureRitual = new StructureRitual(this);
+        dimensionManager = new DimensionManager(this);
+        portalManager = new PortalManager(this);
+        mobManager = new MobManager(this);
 
         getServer().getPluginManager().registerEvents(new WeaponListener(this), this);
         getServer().getPluginManager().registerEvents(new DeathListener(this), this);
         getServer().getPluginManager().registerEvents(structureRitual, this);
+        getServer().getPluginManager().registerEvents(portalManager, this);
 
         PluginCommand cmd = Objects.requireNonNull(getCommand("gravefall"), "gravefall command missing from plugin.yml");
         GravefallCommand executor = new GravefallCommand(this);
@@ -44,14 +55,22 @@ public final class GravefallPlugin extends JavaPlugin {
         cmd.setTabCompleter(executor);
 
         cooldownManager.startActionBarTask();
+        portalManager.startTravelTask();
+        mobManager.start();
+        dimensionManager.startAmbience();
+        dimensionManager.init();          // re-load an existing dimension after restart
+        portalManager.loadPortals();      // re-load existing portals after restart
 
-        getLogger().info("Gravefall enabled - the corrupted hammer sleeps in the Fallen Kingdom...");
+        getLogger().info("Gravefall enabled - the Soul Dimension sleeps beyond the veil...");
     }
 
     @Override
     public void onDisable() {
         if (structureRitual != null) {
             structureRitual.cleanup();
+        }
+        if (portalManager != null) {
+            portalManager.savePortals();
         }
         getLogger().info("Gravefall disabled.");
     }
@@ -74,6 +93,18 @@ public final class GravefallPlugin extends JavaPlugin {
 
     public StructureRitual getStructureRitual() {
         return structureRitual;
+    }
+
+    public DimensionManager getDimensionManager() {
+        return dimensionManager;
+    }
+
+    public PortalManager getPortalManager() {
+        return portalManager;
+    }
+
+    public MobManager getMobManager() {
+        return mobManager;
     }
 
     /** Broadcasts a component to every online player and the console. */

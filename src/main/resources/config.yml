@@ -2,9 +2,10 @@
 #  GRAVEFALL - The Corrupted Hammer of the Fallen Kingdom
 # ============================================================
 
-# CustomModelData used on the NETHERITE_AXE item so resource packs
-# can safely override the model without touching vanilla items.
-custom-model-data: 7401
+# CustomModelData values used by the plugin + resource pack.
+custom-model-data: 7401          # hammer (netherite axe)
+custom-model-data-portal: 7402   # portal plane (paper icon -> RP model)
+custom-model-data-crystal: 7403  # floating soul crystals (paper icon -> RP model)
 
 weapon:
   # Keep the GRAVEFALL hammer in your inventory when you die.
@@ -37,8 +38,24 @@ deaths:
   ban-reason: "The corruption has claimed your soul... you have fallen too many times."
 
 structure:
-  radius: 250            # 500x500 total area
+  radius: 250            # overworld /gravefall structure area (500x500)
   blocks-per-tick: 1200  # generation speed (higher = faster but laggier)
+
+dimension:
+  world-name: gravefall_dimension
+  island-radius: 380      # floating blue soul island size
+  kingdom-radius: 200     # feature spread of the kingdom inside the dimension
+
+portal:
+  # Rift portals that tear open inside the dimension after the hammer is claimed.
+  return-portals: 6
+
+mobs:
+  frost-frogs: 10        # freezing frogs in the dimension
+  soul-wisps: 8          # glowing wisps
+  grave-sentinels: 5     # wither skeleton guards
+  frog-damage: 3.0
+  frog-freeze-seconds: 2
 
 ritual:
   required-fragments: 5

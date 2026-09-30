@@ -436,6 +436,15 @@ public class StructureRitual implements Listener {
         }
         new com.gravefall.ritual.TornadoFinale(plugin, p, info.center().clone()).start();
 
+        // open return portals back to the overworld inside the dimension
+        if (plugin.getDimensionManager().isDimensionWorld(w)) {
+            int returns = plugin.getConfig().getInt("portal.return-portals", 6);
+            plugin.getPortalManager().spawnReturnPortals(returns);
+            plugin.broadcast(MiniMessage.miniMessage().deserialize(
+                    "<color:#00c8ff><bold>Rift portals have torn open across the kingdom —</bold></color> "
+                            + "<gray>they lead back to the living world!</gray>"));
+        }
+
         // this structure is spent
         info = null;
         frames.clear();
@@ -451,16 +460,42 @@ public class StructureRitual implements Listener {
 
     private void drawLine(Location from, Location to, double density) {
         World w = info.world();
-        int steps = (int) (14 * density);
-        Vector step = to.toVector().subtract(from.toVector()).multiply(1.0 / steps);
+        long t = System.currentTimeMillis() / 50L; // flow animation
+        int steps = (int) (28 * density);
+        Vector dir = to.toVector().subtract(from.toVector());
+        Vector step = dir.clone().multiply(1.0 / steps);
+        // perpendicular basis for orbiting strands
+        Vector perp = new Vector(-dir.getZ(), 0, dir.getX());
+        if (perp.lengthSquared() < 0.01) {
+            perp = new Vector(1, 0, 0);
+        } else {
+            perp.normalize();
+        }
         Location cur = from.clone();
         for (int i = 0; i < steps; i++) {
             cur.add(step);
-            w.spawnParticle(Particle.PORTAL, cur, 1, 0.03, 0.03, 0.03, 0.01);
-            if (i % 2 == 0) {
-                w.spawnParticle(Particle.SOUL, cur, 1, 0.02, 0.02, 0.02, 0);
+            double f = i / (double) steps;
+            // core strand
+            w.spawnParticle(Particle.PORTAL, cur, 2, 0.02, 0.02, 0.02, 0.02);
+            // two orbiting soul strands (flowing toward the altar)
+            double ang = f * Math.PI * 7.0 + t * 0.35;
+            double wob = 0.22;
+            Location s1 = cur.clone().add(perp.clone().multiply(Math.cos(ang) * wob)).add(0, Math.sin(ang) * wob, 0);
+            w.spawnParticle(Particle.SOUL, s1, 1, 0, 0, 0, 0);
+            Location s2 = cur.clone().add(perp.clone().multiply(Math.cos(ang + Math.PI) * wob)).add(0, Math.sin(ang + Math.PI) * wob, 0);
+            w.spawnParticle(Particle.SOUL_FIRE_FLAME, s2, 1, 0, 0, 0, 0);
+            // witch sparks every few steps
+            if (i % 3 == 0) {
+                w.spawnParticle(Particle.WITCH, cur, 1, 0.03, 0.03, 0.03, 0);
+            }
+            if (i % 4 == 0) {
+                w.spawnParticle(Particle.DUST, cur, 1, 0.02, 0.02, 0.02, 0,
+                        new Particle.DustOptions(org.bukkit.Color.fromRGB(150, 60, 255), 1.2f));
             }
         }
+        // end sparks
+        w.spawnParticle(Particle.END_ROD, to, 4, 0.1, 0.1, 0.1, 0.03);
+        w.spawnParticle(Particle.END_ROD, from, 2, 0.08, 0.08, 0.08, 0.02);
     }
 
     private static String formatSeconds(int total) {

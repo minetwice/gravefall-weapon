@@ -104,4 +104,24 @@ public final class Items {
                 .get(plugin.fragmentKey(), PersistentDataType.BYTE);
         return tag != null && tag == (byte) 1;
     }
+
+    /** Invisible icon item for the portal plane display entity (RP model). */
+    public static ItemStack createPortalIcon(GravefallPlugin plugin) {
+        ItemStack paper = new ItemStack(Material.PAPER);
+        ItemMeta meta = paper.getItemMeta();
+        meta.displayName(MiniMessage.miniMessage().deserialize("<blue>Gravefall Portal</blue>"));
+        meta.setCustomModelData(plugin.getConfig().getInt("custom-model-data-portal", 7402));
+        paper.setItemMeta(meta);
+        return paper;
+    }
+
+    /** Icon item for the floating soul crystals (RP model). */
+    public static ItemStack createCrystalIcon(GravefallPlugin plugin) {
+        ItemStack paper = new ItemStack(Material.PAPER);
+        ItemMeta meta = paper.getItemMeta();
+        meta.displayName(MiniMessage.miniMessage().deserialize("<color:#7fd4ff>Soul Crystal</color>"));
+        meta.setCustomModelData(plugin.getConfig().getInt("custom-model-data-crystal", 7403));
+        paper.setItemMeta(meta);
+        return paper;
+    }
 }

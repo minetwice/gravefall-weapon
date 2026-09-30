@@ -32,7 +32,7 @@ import java.util.List;
 public class GravefallCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBS = Arrays.asList(
-            "give", "fragment", "structure", "revive", "deaths", "reload", "help");
+            "give", "fragment", "structure", "portal", "removeportal", "revive", "deaths", "reload", "help");
 
     private final GravefallPlugin plugin;
 
@@ -118,7 +118,10 @@ public class GravefallCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(MiniMessage.miniMessage().deserialize(
                         "<dark_purple>Raising the Corrupted Kingdom (" + (radius * 2) + "x" + (radius * 2)
                                 + " blocks) around you...</dark_purple>"));
-                StructureBuilder.build(plugin, p, w, center, radius);
+                StructureBuilder.build(plugin, p, w, center, radius, StructureBuilder.Theme.CORRUPTED, info -> {
+                    sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                            "<dark_purple>The corrupted kingdom stands (overworld).</dark_purple>"));
+                });
             }
             case "revive" -> {
                 if (args.length < 2) {
@@ -157,6 +160,21 @@ public class GravefallCommand implements CommandExecutor, TabCompleter {
                         "<gray>" + target.getName() + " has died <red>" + deaths + "</red>/"
                                 + max + " allowed deaths.</gray>"));
             }
+            case "portal" -> {
+                if (!(sender instanceof Player p)) {
+                    sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Only players can use this.</red>"));
+                    return true;
+                }
+                boolean forceOpen = args.length >= 2 && args[1].equalsIgnoreCase("open");
+                plugin.getPortalManager().summon(p, forceOpen, false);
+            }
+            case "removeportal" -> {
+                if (!(sender instanceof Player p)) {
+                    sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Only players can use this.</red>"));
+                    return true;
+                }
+                plugin.getPortalManager().removeNear(p);
+            }
             case "reload" -> {
                 plugin.reloadConfig();
                 sender.sendMessage(MiniMessage.miniMessage().deserialize(
@@ -175,7 +193,11 @@ public class GravefallCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(MiniMessage.miniMessage().deserialize(
                 "<dark_purple>»</dark_purple> <gray>/gravefall fragment <player> [n] <dark_gray>- give fragments</dark_gray>"));
         sender.sendMessage(MiniMessage.miniMessage().deserialize(
-                "<dark_purple>»</dark_purple> <gray>/gravefall structure [radius] <dark_gray>- raise the kingdom</dark_gray>"));
+                "<dark_purple>»</dark_purple> <gray>/gravefall structure [radius] <dark_gray>- raise the kingdom (overworld)</dark_gray>"));
+        sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                "<dark_purple>»</dark_purple> <gray>/gravefall portal [open] <dark_gray>- summon the Soul Dimension portal</dark_gray>"));
+        sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                "<dark_purple>»</dark_purple> <gray>/gravefall removeportal <dark_gray>- remove the portal in front of you</dark_gray>"));
         sender.sendMessage(MiniMessage.miniMessage().deserialize(
                 "<dark_purple>»</dark_purple> <gray>/gravefall revive <player> <dark_gray>- unban the fallen</dark_gray>"));
         sender.sendMessage(MiniMessage.miniMessage().deserialize(
